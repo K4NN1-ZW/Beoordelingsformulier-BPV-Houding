@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BPV Beoordelingsformulier – Werknemersvaardigheden</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f2ee;
+    --surface: #ffffff;
+    --border: #d0ccc4;
+    --border-strong: #9a9690;
+    --accent: #1a3d6e;
+    --accent-light: #e8edf5;
+    --accent-mid: #2f5f9e;
+    --score-0: #c0392b;
+    --score-1: #e67e22;
+    --score-2: #27ae60;
+    --score-3: #1a6b3c;
+    --text: #1c1a17;
+    --text-muted: #6b6760;
+    --check-active: #1a3d6e;
+    --radius: 4px;
+    --font: 'IBM Plex Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    min-height: 100vh;
+    padding: 32px 16px;
+  }
+
+  #app {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .form-header {
+    background: var(--accent);
+    color: white;
+    padding: 28px 32px;
+    border-radius: var(--radius) var(--radius) 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .form-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+  }
+
+  .form-header p {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+
+  .scalda-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    background: rgba(255,255,255,0.15);
+    padding: 6px 12px;
+    border-radius: 2px;
+    white-space: nowrap;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Form body */
+  .form-body {
+    background: var(--surface);
+    padding: 32px;
+    border: 1px solid var(--border);
+    border-top: none;
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 32px;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Grid fields */
+  .fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .field label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: var(--mono);
+  }
+
+  .field input[type="text"],
+  .field input[type="date"] {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-family: var(--font);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+  }
+
+  .field input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: white;
+  }
+
+  .field select {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-family: var(--font);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b6760' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  .field select:focus {
+    outline: none;
+    border-color: var(--accent);
+    background-color: white;
+  }
+
+  .field select.missing {
+    border-color: #c0392b;
+    background-color: #fdf3f2;
+  }
+
+  /* Beoordeling type toggle */
+  .beoordeling-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .beoordeling-toggle input[type="radio"] { display: none; }
+
+  .beoordeling-toggle label {
+    flex: 1;
+    padding: 10px 16px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--bg);
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+    border-right: 1px solid var(--border);
+  }
+
+  .beoordeling-toggle label:last-of-type { border-right: none; }
+
+  .beoordeling-toggle input:checked + label {
+    background: var(--accent);
+    color: white;
+  }
+
+  /* Scoring table */
+  .scoring-section {
+    margin-bottom: 32px;
+  }
+
+  .competentie-block {
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .competentie-name {
+    background: var(--accent-light);
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.02em;
+  }
+
+  .score-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+
+  .score-option {
+    position: relative;
+    border-right: 1px solid var(--border);
+  }
+
+  .score-option:last-child { border-right: none; }
+
+  .score-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0; height: 0;
+  }
+
+  .score-option label {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    cursor: pointer;
+    height: 100%;
+    transition: background 0.12s;
+  }
+
+  .score-option label:hover { background: #faf9f7; }
+
+  .score-option input:checked + label {
+    background: var(--accent-light);
+  }
+
+  .score-num {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .score-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border-strong);
+    flex-shrink: 0;
+    transition: border-color 0.12s, background 0.12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .score-dot::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: transparent;
+    transition: background 0.12s;
+  }
+
+  .score-option input:checked + label .score-dot {
+    border-color: var(--accent);
+  }
+
+  .score-option input:checked + label .score-dot::after {
+    background: var(--accent);
+  }
+
+  .score-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 2px;
+    color: white;
+  }
+
+  .score-0 .score-badge { background: var(--score-0); }
+  .score-1 .score-badge { background: var(--score-1); }
+  .score-2 .score-badge { background: var(--score-2); }
+  .score-3 .score-badge { background: var(--score-3); }
+
+  .score-text {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+
+  .score-option input:checked + label .score-text {
+    color: var(--text);
+  }
+
+  /* Motivatie */
+  .motivatie-area {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    width: 100%;
+    font-family: var(--font);
+    font-size: 13px;
+    resize: vertical;
+    min-height: 90px;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .motivatie-area:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: white;
+  }
+
+  /* Signature section */
+  .sig-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .sig-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .sig-label-bar {
+    background: var(--accent-light);
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    font-family: var(--mono);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .sig-controls {
+    display: flex;
+    gap: 6px;
+  }
+
+  .sig-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    cursor: pointer;
+    background: white;
+    color: var(--text-muted);
+    transition: background 0.12s, color 0.12s;
+  }
+
+  .sig-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+  .sig-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .sig-canvas-wrap {
+    position: relative;
+    background: white;
+  }
+
+  canvas.sig-canvas {
+    display: block;
+    width: 100%;
+    height: 120px;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  .sig-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #ccc;
+    pointer-events: none;
+    font-style: italic;
+  }
+
+  /* Divider */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+
+  /* Download button */
+  .action-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px 32px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-strong);
+  }
+
+  /* Validation feedback */
+  .field input.invalid,
+  canvas.invalid { border-color: #c0392b !important; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--accent);
+    color: white;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-family: var(--mono);
+    font-size: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: transform 0.3s, opacity 0.3s;
+    z-index: 100;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* Top toolbar */
+  .top-toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 32px;
+    background: #eceae5;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: var(--radius) var(--radius) 0 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    flex-wrap: wrap;
+  }
+
+  .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .toolbar-label {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .toolbar-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: white;
+    color: var(--text);
+    transition: background 0.12s, color 0.12s;
+  }
+
+  .toolbar-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .autosave-status {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .autosave-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ccc;
+    transition: background 0.3s;
+  }
+
+  .autosave-dot.saved { background: #27ae60; }
+  .autosave-dot.saving { background: #e67e22; }
+
+  /* Lock overlay */
+  .locked-overlay {
+    position: relative;
+  }
+  .locked-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(244,242,238,0.72);
+    border-radius: var(--radius);
+    z-index: 10;
+    backdrop-filter: blur(1px);
+    pointer-events: all;
+    cursor: not-allowed;
+  }
+
+  /* Validation highlight */
+  .field input.missing {
+    border-color: #c0392b;
+    background: #fdf3f2;
+  }
+  .beoordeling-toggle.missing {
+    border-color: #c0392b;
+  }
+
+  /* Error banner */
+  .error-banner {
+    background: #fdf3f2;
+    border: 1px solid #e8b4b0;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #922b21;
+    margin-bottom: 16px;
+    display: none;
+    line-height: 1.5;
+  }
+  .error-banner.visible { display: block; }
+  .error-banner ul { margin: 6px 0 0 16px; }
+  .error-banner li { margin-bottom: 2px; }
+
+  /* Print / export target */
+  #export-target {
+    background: white;
+  }
+
+  @media (max-width: 600px) {
+    .fields-grid { grid-template-columns: 1fr; }
+    .score-options { grid-template-columns: 1fr 1fr; }
+    .sig-grid { grid-template-columns: 1fr; }
+    .form-header { flex-direction: column; }
+    .form-body { padding: 20px; }
+    .action-bar { padding: 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="export-target">
+
+    <!-- Toolbar -->
+    <div class="top-toolbar">
+      <div class="toolbar-group">
+        <span class="toolbar-label">Gegevens</span>
+        <button class="toolbar-btn" onclick="exportJSON()">↑ Exporteer JSON</button>
+        <button class="toolbar-btn" onclick="document.getElementById('import-input').click()">↓ Importeer JSON</button>
+        <input type="file" id="import-input" accept=".json" style="display:none" onchange="importJSON(event)">
+      </div>
+      <div class="autosave-status">
+        <div class="autosave-dot" id="autosave-dot"></div>
+        <span id="autosave-label">Nog niet opgeslagen</span>
+        <button class="toolbar-btn" onclick="resetForm()" style="margin-left:10px;">↺ Reset</button>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="form-header">
+      <div>
+        <h1>Beoordelingsformulier<br>Algemene Werknemersvaardigheden</h1>
+        <p>BPV – Scalda MBO</p>
+      </div>
+      <div class="scalda-badge">Scalda MBO</div>
+    </div>
+
+    <div class="form-body">
+
+      <!-- Persoonsgegevens -->
+      <div class="section">
+        <div class="section-label">Persoonsgegevens</div>
+        <div class="fields-grid">
+          <div class="field">
+            <label>Naam student</label>
+            <input type="text" id="naam-student" placeholder="Voornaam Achternaam">
+          </div>
+          <div class="field">
+            <label>Studentnummer</label>
+            <input type="text" id="studentnummer" placeholder="bijv. 12345678">
+          </div>
+          <div class="field">
+            <label>Naam bedrijf</label>
+            <input type="text" id="naam-bedrijf" placeholder="Stagebedrijf">
+          </div>
+          <div class="field">
+            <label>Naam praktijkbegeleider</label>
+            <input type="text" id="naam-begeleider" placeholder="Voornaam Achternaam">
+          </div>
+          <div class="field">
+            <label>Naam docent</label>
+            <input type="text" id="naam-docent" placeholder="Voornaam Achternaam">
+          </div>
+          <div class="field">
+            <label>Opleiding / Niveau (CREBO)</label>
+            <select id="opleiding-niveau" onchange="handleOpleidingChange()">
+              <option value="" disabled selected>Selecteer opleiding</option>
+              <optgroup label="Entree / Instroom">
+                <option value="Assistant Business Services (25724) – niveau 2">Assistant Business Services (25724) – niveau 2</option>
+                <option value="Allround Assistant Business Services (25723) – niveau 3">Allround Assistant Business Services (25723) – niveau 3</option>
+              </optgroup>
+              <optgroup label="Specialist (niveau 4)">
+                <option value="Business Administration & Control Specialist (25725) – niveau 4">Business Administration & Control Specialist (25725) – niveau 4</option>
+                <option value="Legal, Insurance & HR Services Specialist (25726) – niveau 4">Legal, Insurance & HR Services Specialist (25726) – niveau 4</option>
+                <option value="Marketing & Communication Specialist (25727) – niveau 4">Marketing & Communication Specialist (25727) – niveau 4</option>
+                <option value="Office & Management Support Specialist (25728) – niveau 4">Office & Management Support Specialist (25728) – niveau 4</option>
+              </optgroup>
+              <option value="anders">Anders...</option>
+            </select>
+            <input type="text" id="opleiding-anders" placeholder="Vul opleiding + CREBO + niveau in" style="display:none; margin-top:6px;">
+          </div>
+          <div class="field">
+            <label>Datum beoordeling</label>
+            <input type="date" id="datum-beoordeling">
+          </div>
+        </div>
+      </div>
+
+
+
+      <hr>
+
+      <!-- Type beoordeling -->
+      <div class="section">
+        <div class="section-label">Type beoordeling</div>
+        <div class="beoordeling-toggle">
+          <input type="radio" name="beoordeling-type" id="type-tussen" value="tussenbeoordeling">
+          <label for="type-tussen">Tussenbeoordeling</label>
+          <input type="radio" name="beoordeling-type" id="type-eind" value="eindbeoordeling">
+          <label for="type-eind">Eindbeoordeling</label>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- Locked section -->
+      <div id="beoordeling-sectie" class="locked-overlay">
+
+      <!-- Scoring -->
+      <div class="section scoring-section">
+        <div class="section-label">Werknemersvaardigheden – Beoordeling</div>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px; font-family:var(--mono);">Selecteer per competentie één score (0–3)</p>
+
+        <!-- Samenwerking -->
+        <div class="competentie-block">
+          <div class="competentie-name">Samenwerking</div>
+          <div class="score-options">
+            <div class="score-option score-0">
+              <input type="radio" name="samenwerking" id="sw-0" value="0">
+              <label for="sw-0">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">0</span></div>
+                <div class="score-text">Gaat niet respectvol om met collega's en/of is niet hulpvaardig. Niet in staat om samen te werken.</div>
+              </label>
+            </div>
+            <div class="score-option score-1">
+              <input type="radio" name="samenwerking" id="sw-1" value="1">
+              <label for="sw-1">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">1</span></div>
+                <div class="score-text">Gaat over het algemeen respectvol om met collega's en is over het algemeen hulpvaardig.</div>
+              </label>
+            </div>
+            <div class="score-option score-2">
+              <input type="radio" name="samenwerking" id="sw-2" value="2">
+              <label for="sw-2">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">2</span></div>
+                <div class="score-text">Gaat meestal respectvol om met collega's en is meestal hulpvaardig.</div>
+              </label>
+            </div>
+            <div class="score-option score-3">
+              <input type="radio" name="samenwerking" id="sw-3" value="3">
+              <label for="sw-3">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">3</span></div>
+                <div class="score-text">Gaat altijd respectvol om met collega's en is altijd hulpvaardig.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Persoonlijke ontwikkeling -->
+        <div class="competentie-block">
+          <div class="competentie-name">Persoonlijke Ontwikkeling</div>
+          <div class="score-options">
+            <div class="score-option score-0">
+              <input type="radio" name="persoonlijk" id="po-0" value="0">
+              <label for="po-0">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">0</span></div>
+                <div class="score-text">Toont geen interesse, gaat niet goed om met feedback. Past geleerde niet toe.</div>
+              </label>
+            </div>
+            <div class="score-option score-1">
+              <input type="radio" name="persoonlijk" id="po-1" value="1">
+              <label for="po-1">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">1</span></div>
+                <div class="score-text">Toont soms interesse en gaat soms goed om met feedback. Past soms geleerde toe.</div>
+              </label>
+            </div>
+            <div class="score-option score-2">
+              <input type="radio" name="persoonlijk" id="po-2" value="2">
+              <label for="po-2">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">2</span></div>
+                <div class="score-text">Toont over het algemeen interesse en gaat redelijk goed om met feedback.</div>
+              </label>
+            </div>
+            <div class="score-option score-3">
+              <input type="radio" name="persoonlijk" id="po-3" value="3">
+              <label for="po-3">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">3</span></div>
+                <div class="score-text">Toont altijd interesse en gaat goed om met feedback. Past geleerde altijd toe.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interne communicatie -->
+        <div class="competentie-block">
+          <div class="competentie-name">Interne Communicatie</div>
+          <div class="score-options">
+            <div class="score-option score-0">
+              <input type="radio" name="intern-comm" id="ic-0" value="0">
+              <label for="ic-0">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">0</span></div>
+                <div class="score-text">Communiceert zelden gepast met collega's en leidinggevenden. Gebruikt zelden juiste middelen.</div>
+              </label>
+            </div>
+            <div class="score-option score-1">
+              <input type="radio" name="intern-comm" id="ic-1" value="1">
+              <label for="ic-1">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">1</span></div>
+                <div class="score-text">Communiceert soms gepast met collega's en leidinggevenden. Gebruikt soms juiste middelen.</div>
+              </label>
+            </div>
+            <div class="score-option score-2">
+              <input type="radio" name="intern-comm" id="ic-2" value="2">
+              <label for="ic-2">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">2</span></div>
+                <div class="score-text">Communiceert meestal gepast met collega's en leidinggevenden.</div>
+              </label>
+            </div>
+            <div class="score-option score-3">
+              <input type="radio" name="intern-comm" id="ic-3" value="3">
+              <label for="ic-3">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">3</span></div>
+                <div class="score-text">Communiceert altijd gepast met collega's en leidinggevenden. Gebruikt altijd juiste middelen.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Externe communicatie -->
+        <div class="competentie-block">
+          <div class="competentie-name">Externe Communicatie</div>
+          <div class="score-options">
+            <div class="score-option score-0">
+              <input type="radio" name="extern-comm" id="ec-0" value="0">
+              <label for="ec-0">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">0</span></div>
+                <div class="score-text">Communiceert zelden gepast met klanten en/of andere externen.</div>
+              </label>
+            </div>
+            <div class="score-option score-1">
+              <input type="radio" name="extern-comm" id="ec-1" value="1">
+              <label for="ec-1">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">1</span></div>
+                <div class="score-text">Communiceert soms gepast met klanten en/of andere externen.</div>
+              </label>
+            </div>
+            <div class="score-option score-2">
+              <input type="radio" name="extern-comm" id="ec-2" value="2">
+              <label for="ec-2">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">2</span></div>
+                <div class="score-text">Communiceert meestal gepast met klanten en/of andere externen.</div>
+              </label>
+            </div>
+            <div class="score-option score-3">
+              <input type="radio" name="extern-comm" id="ec-3" value="3">
+              <label for="ec-3">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">3</span></div>
+                <div class="score-text">Communiceert altijd gepast met klanten en/of andere externen. Gebruikt altijd juiste middelen.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Initiatief -->
+        <div class="competentie-block">
+          <div class="competentie-name">Initiatief</div>
+          <div class="score-options">
+            <div class="score-option score-0">
+              <input type="radio" name="initiatief" id="in-0" value="0">
+              <label for="in-0">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">0</span></div>
+                <div class="score-text">Neemt geen initiatief. Stelt niet tijdig een hulpvraag wanneer nodig.</div>
+              </label>
+            </div>
+            <div class="score-option score-1">
+              <input type="radio" name="initiatief" id="in-1" value="1">
+              <label for="in-1">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">1</span></div>
+                <div class="score-text">Neemt soms initiatief en stelt soms een hulpvraag indien nodig.</div>
+              </label>
+            </div>
+            <div class="score-option score-2">
+              <input type="radio" name="initiatief" id="in-2" value="2">
+              <label for="in-2">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">2</span></div>
+                <div class="score-text">Neemt meestal initiatief en stelt meestal een hulpvraag indien nodig.</div>
+              </label>
+            </div>
+            <div class="score-option score-3">
+              <input type="radio" name="initiatief" id="in-3" value="3">
+              <label for="in-3">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">3</span></div>
+                <div class="score-text">Neemt vaak initiatief en stelt tijdig een hulpvraag indien nodig.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bedrijfscultuur -->
+        <div class="competentie-block">
+          <div class="competentie-name">Bedrijfscultuur</div>
+          <div class="score-options">
+            <div class="score-option score-0">
+              <input type="radio" name="bedrijfscultuur" id="bc-0" value="0">
+              <label for="bc-0">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">0</span></div>
+                <div class="score-text">Kent de regels en bedrijfscultuur niet en/of gedraagt zich hier niet naar.</div>
+              </label>
+            </div>
+            <div class="score-option score-1">
+              <input type="radio" name="bedrijfscultuur" id="bc-1" value="1">
+              <label for="bc-1">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">1</span></div>
+                <div class="score-text">Kent de regels en gedraagt zich hier over het algemeen naar.</div>
+              </label>
+            </div>
+            <div class="score-option score-2">
+              <input type="radio" name="bedrijfscultuur" id="bc-2" value="2">
+              <label for="bc-2">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">2</span></div>
+                <div class="score-text">Kent de regels en gedraagt zich hier meestal naar.</div>
+              </label>
+            </div>
+            <div class="score-option score-3">
+              <input type="radio" name="bedrijfscultuur" id="bc-3" value="3">
+              <label for="bc-3">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">3</span></div>
+                <div class="score-text">Kent de regels en gedraagt zich hier altijd naar.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Afspraken -->
+        <div class="competentie-block">
+          <div class="competentie-name">Afspraken nakomen</div>
+          <div class="score-options">
+            <div class="score-option score-0">
+              <input type="radio" name="afspraken" id="af-0" value="0">
+              <label for="af-0">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">0</span></div>
+                <div class="score-text">Houdt zich te weinig aan gemaakte afspraken.</div>
+              </label>
+            </div>
+            <div class="score-option score-1">
+              <input type="radio" name="afspraken" id="af-1" value="1">
+              <label for="af-1">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">1</span></div>
+                <div class="score-text">Houdt zich over het algemeen aan gemaakte afspraken.</div>
+              </label>
+            </div>
+            <div class="score-option score-2">
+              <input type="radio" name="afspraken" id="af-2" value="2">
+              <label for="af-2">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">2</span></div>
+                <div class="score-text">Houdt zich op een enkel geval na aan gemaakte afspraken.</div>
+              </label>
+            </div>
+            <div class="score-option score-3">
+              <input type="radio" name="afspraken" id="af-3" value="3">
+              <label for="af-3">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">3</span></div>
+                <div class="score-text">Houdt zich altijd aan gemaakte afspraken.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Werkdruk -->
+        <div class="competentie-block">
+          <div class="competentie-name">Omgang met werkdruk</div>
+          <div class="score-options">
+            <div class="score-option score-0">
+              <input type="radio" name="werkdruk" id="wd-0" value="0">
+              <label for="wd-0">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">0</span></div>
+                <div class="score-text">Gaat slecht om met werkdruk en stelt geen prioriteiten.</div>
+              </label>
+            </div>
+            <div class="score-option score-1">
+              <input type="radio" name="werkdruk" id="wd-1" value="1">
+              <label for="wd-1">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">1</span></div>
+                <div class="score-text">Gaat matig om met werkdruk en stelt zelden prioriteiten.</div>
+              </label>
+            </div>
+            <div class="score-option score-2">
+              <input type="radio" name="werkdruk" id="wd-2" value="2">
+              <label for="wd-2">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">2</span></div>
+                <div class="score-text">Gaat goed om met werkdruk en stelt vaak prioriteiten.</div>
+              </label>
+            </div>
+            <div class="score-option score-3">
+              <input type="radio" name="werkdruk" id="wd-3" value="3">
+              <label for="wd-3">
+                <div class="score-num"><div class="score-dot"></div><span class="score-badge">3</span></div>
+                <div class="score-text">Gaat uitstekend om met werkdruk en stelt vaak prioriteiten.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <hr>
+
+      <!-- Motivatie -->
+      <div class="section">
+        <div class="section-label">Motivatie beoordelaar</div>
+        <textarea class="motivatie-area" id="motivatie" placeholder="Toelichting op de beoordeling..."></textarea>
+      </div>
+
+      <hr>
+
+      <!-- Handtekeningen -->
+      <div class="section">
+        <div class="section-label">Ondertekening</div>
+        <div class="sig-grid">
+          <div class="sig-block">
+            <div class="sig-label-bar">
+              Praktijkbegeleider
+              <div class="sig-controls">
+                <button class="sig-btn active" onclick="activatePen('sig-begeleider', this)">✏ Teken</button>
+                <button class="sig-btn" onclick="clearSig('sig-begeleider')">✕ Wis</button>
+              </div>
+            </div>
+            <div class="sig-canvas-wrap">
+              <canvas class="sig-canvas" id="sig-begeleider"></canvas>
+              <div class="sig-placeholder" id="ph-begeleider">Teken hier uw handtekening</div>
+            </div>
+          </div>
+          <div class="sig-block">
+            <div class="sig-label-bar">
+              Student
+              <div class="sig-controls">
+                <button class="sig-btn active" onclick="activatePen('sig-student', this)">✏ Teken</button>
+                <button class="sig-btn" onclick="clearSig('sig-student')">✕ Wis</button>
+              </div>
+            </div>
+            <div class="sig-canvas-wrap">
+              <canvas class="sig-canvas" id="sig-student"></canvas>
+              <div class="sig-placeholder" id="ph-student">Teken hier uw handtekening</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      </div><!-- /beoordeling-sectie -->
+
+    </div><!-- /form-body -->
+  </div><!-- /export-target -->
+
+  <!-- Error banner -->
+  <div class="error-banner" id="error-banner">
+    <strong>Formulier is nog niet volledig ingevuld:</strong>
+    <ul id="error-list"></ul>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <button class="btn btn-secondary" onclick="resetForm()">↺ Leegmaken</button>
+    <button class="btn btn-primary" onclick="downloadImage()">⬇ Download als PDF</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Signature canvas setup ──────────────────────────────────────────
+  const penActive = { 'sig-begeleider': true, 'sig-student': true };
+  const hasDrawn  = { 'sig-begeleider': false, 'sig-student': false };
+
+  function setupCanvas(id) {
+    const canvas = document.getElementById(id);
+    const ctx = canvas.getContext('2d');
+    let dpr = window.devicePixelRatio || 1;
+    let rect = canvas.getBoundingClientRect();
+    canvas.width  = rect.width  * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    ctx.strokeStyle = '#1a3d6e';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    let drawing = false;
+
+    function getPos(e) {
+      let r = canvas.getBoundingClientRect();
+      if (e.touches) {
+        return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
+      }
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    function start(e) {
+      if (!penActive[id]) return;
+      e.preventDefault();
+      drawing = true;
+      let p = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      document.getElementById('ph-' + id.replace('sig-','')).style.display = 'none';
+    }
+
+    function move(e) {
+      if (!drawing || !penActive[id]) return;
+      e.preventDefault();
+      let p = getPos(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      hasDrawn[id] = true;
+    }
+
+    function end(e) { drawing = false; }
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    canvas.addEventListener('mouseup', end);
+    canvas.addEventListener('mouseleave', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+  }
+
+  function activatePen(id, btn) {
+    penActive[id] = true;
+  }
+
+  function clearSig(id) {
+    const canvas = document.getElementById(id);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    hasDrawn[id] = false;
+    const ph = document.getElementById('ph-' + id.replace('sig-',''));
+    if (ph) ph.style.display = 'flex';
+  }
+
+  // ── Toast ──────────────────────────────────────────────────────────
+  function showToast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = isError ? '#922b21' : 'var(--accent)';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 4000);
+  }
+
+  // ── Lock / unlock beoordeling section ───────────────────────────────
+  function isHeaderComplete() {
+    const textFields = ['naam-student','studentnummer','naam-bedrijf','naam-begeleider','naam-docent'];
+    const allText = textFields.every(id => document.getElementById(id).value.trim() !== '');
+    const datum = document.getElementById('datum-beoordeling').value.trim() !== '';
+    // Opleiding: must be selected, and if 'anders' the custom field must be filled
+    const opSel = document.getElementById('opleiding-niveau');
+    const opOk = opSel.value !== '' && (opSel.value !== 'anders' || document.getElementById('opleiding-anders').value.trim() !== '');
+    const type = document.querySelector('input[name="beoordeling-type"]:checked');
+    return allText && datum && opOk && type;
+  }
+
+  function updateLock() {
+    const sectie = document.getElementById('beoordeling-sectie');
+    if (isHeaderComplete()) {
+      sectie.classList.remove('locked-overlay');
+    } else {
+      sectie.classList.add('locked-overlay');
+    }
+  }
+
+  // Attach listeners to all header fields
+  window.addEventListener('load', () => {
+    const watchIds = ['naam-student','studentnummer','naam-bedrijf','naam-begeleider','naam-docent','opleiding-niveau','datum-beoordeling'];
+    watchIds.forEach(id => document.getElementById(id).addEventListener('input', updateLock));
+    document.getElementById('opleiding-anders').addEventListener('input', updateLock);
+    document.querySelectorAll('input[name="beoordeling-type"]').forEach(r => r.addEventListener('change', updateLock));
+    updateLock(); // initial state
+    loadAutosave();
+
+    // Autosave on change
+    watchIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el.tagName === 'SELECT') el.addEventListener('change', autosave);
+      else el.addEventListener('input', autosave);
+    });
+    document.getElementById('opleiding-anders').addEventListener('input', autosave);
+    document.querySelectorAll('input[name="beoordeling-type"]').forEach(r => r.addEventListener('change', autosave));
+
+    setupCanvas('sig-begeleider');
+    setupCanvas('sig-student');
+  });
+
+  // ── Validate full form before download ──────────────────────────────
+  function validateFull() {
+    const errors = [];
+
+    // Header fields
+    const fieldLabels = {
+      'naam-student': 'Naam student',
+      'studentnummer': 'Studentnummer',
+      'naam-bedrijf': 'Naam bedrijf',
+      'naam-begeleider': 'Naam praktijkbegeleider',
+      'naam-docent': 'Naam docent',
+      'datum-beoordeling': 'Datum beoordeling',
+    };
+    Object.entries(fieldLabels).forEach(([id, label]) => {
+      const el = document.getElementById(id);
+      if (!el.value.trim()) {
+        el.classList.add('missing');
+        errors.push(label);
+      } else {
+        el.classList.remove('missing');
+      }
+    });
+
+    // Opleiding validation
+    const opEl = document.getElementById('opleiding-niveau');
+    const opAndersEl = document.getElementById('opleiding-anders');
+    if (!opEl.value) {
+      opEl.classList.add('missing');
+      errors.push('Opleiding / Niveau');
+    } else if (opEl.value === 'anders' && !opAndersEl.value.trim()) {
+      opAndersEl.classList.add('missing');
+      errors.push('Opleiding (vul de aangepaste opleiding in)');
+    } else {
+      opEl.classList.remove('missing');
+      opAndersEl.classList.remove('missing');
+    }
+
+    if (!document.querySelector('input[name="beoordeling-type"]:checked')) {
+      document.querySelector('.beoordeling-toggle:has(#type-tussen)').classList.add('missing');
+      errors.push('Type beoordeling (Tussen / Eind)');
+    } else {
+      document.querySelector('.beoordeling-toggle:has(#type-tussen)').classList.remove('missing');
+    }
+
+    // Competenties
+    const competenties = ['samenwerking','persoonlijk','intern-comm','extern-comm','initiatief','bedrijfscultuur','afspraken','werkdruk'];
+    const competentieLabels = {
+      'samenwerking': 'Samenwerking',
+      'persoonlijk': 'Persoonlijke Ontwikkeling',
+      'intern-comm': 'Interne Communicatie',
+      'extern-comm': 'Externe Communicatie',
+      'initiatief': 'Initiatief',
+      'bedrijfscultuur': 'Bedrijfscultuur',
+      'afspraken': 'Afspraken nakomen',
+      'werkdruk': 'Omgang met werkdruk',
+    };
+    competenties.forEach(name => {
+      if (!document.querySelector(`input[name="${name}"]:checked`)) {
+        errors.push(competentieLabels[name]);
+      }
+    });
+
+    // Handtekeningen
+    if (!hasDrawn['sig-begeleider']) errors.push('Handtekening praktijkbegeleider');
+    if (!hasDrawn['sig-student'])   errors.push('Handtekening student');
+
+    return errors;
+  }
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── Opleiding dropdown ───────────────────────────────────────────
+  function handleOpleidingChange() {
+    const sel = document.getElementById('opleiding-niveau');
+    const anders = document.getElementById('opleiding-anders');
+    if (sel.value === 'anders') {
+      anders.style.display = 'block';
+      anders.focus();
+    } else {
+      anders.style.display = 'none';
+      anders.value = '';
+    }
+    autosave();
+    updateLock();
+  }
+
+  // ── Autosave ───────────────────────────────────────────────────────
+  const SAVE_KEY = 'bpv_formulier_autosave';
+  const SAVE_FIELDS = ['naam-student','studentnummer','naam-bedrijf','naam-begeleider','naam-docent','opleiding-niveau','datum-beoordeling'];
+
+  function getHeaderData() {
+    const data = {};
+    SAVE_FIELDS.forEach(id => { data[id] = document.getElementById(id).value; });
+    // Opleiding "anders" custom value
+    const opSel = document.getElementById('opleiding-niveau');
+    if (opSel.value === 'anders') {
+      data['opleiding-anders'] = document.getElementById('opleiding-anders').value;
+    } else {
+      data['opleiding-anders'] = '';
+    }
+    const type = document.querySelector('input[name="beoordeling-type"]:checked');
+    data['beoordeling-type'] = type ? type.value : '';
+    return data;
+  }
+
+  function applyHeaderData(data) {
+    SAVE_FIELDS.forEach(id => {
+      if (data[id] !== undefined) document.getElementById(id).value = data[id];
+    });
+    // Restore opleiding-anders visibility
+    const opSel = document.getElementById('opleiding-niveau');
+    const opAnders = document.getElementById('opleiding-anders');
+    if (opSel.value === 'anders') {
+      opAnders.style.display = 'block';
+      opAnders.value = data['opleiding-anders'] || '';
+    } else {
+      opAnders.style.display = 'none';
+      opAnders.value = '';
+    }
+    if (data['beoordeling-type']) {
+      const r = document.querySelector(`input[name="beoordeling-type"][value="${data['beoordeling-type']}"]`);
+      if (r) r.checked = true;
+    }
+    updateLock();
+  }
+
+  function autosave() {
+    const dot = document.getElementById('autosave-dot');
+    const lbl = document.getElementById('autosave-label');
+    dot.className = 'autosave-dot saving';
+    lbl.textContent = 'Opslaan…';
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(getHeaderData()));
+      setTimeout(() => {
+        dot.className = 'autosave-dot saved';
+        const now = new Date();
+        lbl.textContent = `Opgeslagen om ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+      }, 300);
+    } catch(e) {
+      dot.className = 'autosave-dot';
+      lbl.textContent = 'Opslaan mislukt';
+    }
+  }
+
+  function loadAutosave() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      applyHeaderData(data);
+      const dot = document.getElementById('autosave-dot');
+      const lbl = document.getElementById('autosave-label');
+      dot.className = 'autosave-dot saved';
+      lbl.textContent = 'Hersteld van vorige sessie';
+    } catch(e) {}
+  }
+
+  // ── Export / Import JSON ───────────────────────────────────────────
+  function exportJSON() {
+    try {
+      const data = getHeaderData();
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const student = (data['naam-student'] || 'student').trim() || 'student';
+      const filename = `BPV-gegevens-${student.replace(/\s+/g,'-')}.json`;
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+      showToast('JSON geëxporteerd.');
+    } catch (err) {
+      console.error('Export JSON error:', err);
+      showToast('Fout bij exporteren JSON.', true);
+    }
+  }
+
+  function importJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (data['_import_type'] === 'tussenbeoordeling_naar_eindbeoordeling') {
+          // Full import: restore all fields, set eindbeoordeling, clear datum
+          applyFullFormData(data);
+          showToast('Tussenbeoordeling geladen – eindbeoordeling aangevinkt.');
+        } else {
+          // Regular header-only import
+          applyHeaderData(data);
+          showToast('Gegevens geladen uit JSON.');
+        }
+        autosave();
+      } catch(err) {
+        showToast('Ongeldig JSON-bestand.', true);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // reset so same file can be re-imported
+  }
+
+  // ── Reset ──────────────────────────────────────────────────────────
+  // ── Reset ──────────────────────────────────────────────────────────
+  function resetForm() {
+    document.querySelectorAll('input[type="text"]').forEach(i => { i.value = ''; i.classList.remove('missing'); });
+    document.querySelectorAll('input[type="date"]').forEach(i => { i.value = ''; i.classList.remove('missing'); });
+    document.querySelectorAll('input[type="radio"]').forEach(i => i.checked = false);
+    const opReset = document.getElementById('opleiding-niveau');
+    opReset.value = '';
+    opReset.classList.remove('missing');
+    document.getElementById('opleiding-anders').style.display = 'none';
+    document.getElementById('opleiding-anders').value = '';
+    document.querySelectorAll('.beoordeling-toggle').forEach(t => t.classList.remove('missing'));
+    document.getElementById('motivatie').value = '';
+    document.getElementById('error-banner').classList.remove('visible');
+    try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+    document.getElementById('autosave-dot').className = 'autosave-dot';
+    document.getElementById('autosave-label').textContent = 'Nog niet opgeslagen';
+    clearSig('sig-begeleider');
+    clearSig('sig-student');
+    updateLock();
+    showToast('Formulier geleegd.');
+  }
+
+  // ── Download as image ──────────────────────────────────────────────
+  // ── Helper: trigger a file download ────────────────────────────────
+  function triggerDownload(filename, href) {
+    // Small delay between downloads so browser doesn't swallow them
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const a = document.createElement('a');
+        a.download = filename;
+        a.href = href;
+        a.click();
+        resolve();
+      }, 300);
+    });
+  }
+
+  // ── Get full form data (header + scores) ────────────────────────────
+  function getFullFormData() {
+    const data = getHeaderData();
+
+    // Scores
+    const competenties = ['samenwerking','persoonlijk','intern-comm','extern-comm','initiatief','bedrijfscultuur','afspraken','werkdruk'];
+    const scores = {};
+    competenties.forEach(name => {
+      const checked = document.querySelector(`input[name="${name}"]:checked`);
+      scores[name] = checked ? checked.value : null;
+    });
+    data['scores'] = scores;
+    data['motivatie'] = document.getElementById('motivatie').value;
+    return data;
+  }
+
+  // ── Apply full form data (header + scores) ──────────────────────────
+  function applyFullFormData(data) {
+    // Apply header (skip datum so it stays empty)
+    const dataWithoutDatum = Object.assign({}, data, { 'datum-beoordeling': '' });
+    applyHeaderData(dataWithoutDatum);
+
+    // Force eindbeoordeling
+    const eindRadio = document.querySelector('input[name="beoordeling-type"][value="eindbeoordeling"]');
+    if (eindRadio) { eindRadio.checked = true; updateLock(); }
+
+    // Restore scores
+    if (data['scores']) {
+      Object.entries(data['scores']).forEach(([name, val]) => {
+        if (val !== null) {
+          const r = document.querySelector(`input[name="${name}"][value="${val}"]`);
+          if (r) r.checked = true;
+        }
+      });
+    }
+
+    // Restore motivatie
+    if (data['motivatie'] !== undefined) {
+      document.getElementById('motivatie').value = data['motivatie'];
+    }
+  }
+
+  // ── Download as image ──────────────────────────────────────────────
+  async function downloadImage() {
+    const errors = validateFull();
+    const banner = document.getElementById('error-banner');
+    const list   = document.getElementById('error-list');
+
+    if (errors.length > 0) {
+      list.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+      banner.classList.add('visible');
+      banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      showToast(`Nog ${errors.length} veld(en) ontbreekt.`, true);
+      return;
+    }
+
+    banner.classList.remove('visible');
+
+    const typeChecked = document.querySelector('input[name="beoordeling-type"]:checked');
+    const isTussen = typeChecked && typeChecked.value === 'tussenbeoordeling';
+    const student  = document.getElementById('naam-student').value.trim() || 'Student';
+    const bedrijf  = document.getElementById('naam-bedrijf').value.trim() || 'Bedrijf';
+    const typeStr  = isTussen ? 'Tussenbeoordeling' : 'Eindbeoordeling';
+
+    const target = document.getElementById('export-target');
+    showToast('PDF wordt aangemaakt…');
+
+    // Hide placeholders for clean export
+    document.querySelectorAll('.sig-placeholder').forEach(p => p.style.display = 'none');
+
+    try {
+      // 1. Determine where to split: after the 4th competentie block
+      const containerRect = target.getBoundingClientRect();
+      const competenties = target.querySelectorAll('.competentie-block');
+      let breakOffsetPx = null;
+      if (competenties.length >= 4) {
+        const breakElement = competenties[3];
+        const breakRect    = breakElement.getBoundingClientRect();
+        breakOffsetPx      = breakRect.bottom - containerRect.top + 12; // small breathing room
+      }
+
+      // 2. Render full DOM to canvas at scale 3 for sharp PDF
+      const rawCanvas = await html2canvas(target, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const canvasScale = rawCanvas.width / containerRect.width;
+      const breakY = breakOffsetPx !== null
+        ? Math.round(breakOffsetPx * canvasScale)
+        : Math.round(rawCanvas.height / 2);
+
+      // jsPDF A4 in mm: 210 × 297
+      const { jsPDF } = window.jspdf;
+      const PAGE_W_MM   = 210;
+      const PAGE_H_MM   = 297;
+      const PAD_MM      = 12;
+      const contentW_MM = PAGE_W_MM - PAD_MM * 2;
+      const contentH_MM = PAGE_H_MM - PAD_MM * 2;
+
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+      // Helper: place a canvas slice onto the current PDF page
+      function placeSlice(startY, endY, firstPage) {
+        const sliceW_px = rawCanvas.width;
+        const sliceH_px = endY - startY;
+        if (sliceH_px <= 0) return;
+
+        // Scale slice to fit A4 content area, keeping aspect ratio
+        let drawW_MM = contentW_MM;
+        let drawH_MM = (sliceH_px / sliceW_px) * drawW_MM;
+
+        if (drawH_MM > contentH_MM) {
+          const shrink = contentH_MM / drawH_MM;
+          drawW_MM *= shrink;
+          drawH_MM = contentH_MM;
+        }
+
+        // Build slice canvas
+        const slice = document.createElement('canvas');
+        slice.width  = sliceW_px;
+        slice.height = sliceH_px;
+        const sCtx   = slice.getContext('2d');
+        sCtx.fillStyle = '#ffffff';
+        sCtx.fillRect(0, 0, sliceW_px, sliceH_px);
+        sCtx.drawImage(
+          rawCanvas,
+          0, startY, sliceW_px, sliceH_px,
+          0, 0, sliceW_px, sliceH_px
+        );
+
+        const sliceData = slice.toDataURL('image/png');
+
+        if (!firstPage) pdf.addPage();
+        const offsetX = PAD_MM + (contentW_MM - drawW_MM) / 2;
+        pdf.addImage(sliceData, 'PNG', offsetX, PAD_MM, drawW_MM, drawH_MM, '', 'FAST');
+      }
+
+      // Page 1: top → break
+      placeSlice(0, breakY, true);
+      // Page 2: break → bottom
+      placeSlice(breakY, rawCanvas.height, false);
+
+      const pdfBlob = pdf.output('blob');
+      const pdfHref = URL.createObjectURL(pdfBlob);
+      await triggerDownload(`${typeStr} ${student} ${bedrijf}.pdf`, pdfHref);
+
+      if (isTussen) {
+        // 2. Full JSON for import at eindbeoordeling
+        const fullData = getFullFormData();
+        fullData['_import_type'] = 'tussenbeoordeling_naar_eindbeoordeling';
+        const jsonBlob = new Blob([JSON.stringify(fullData, null, 2)], { type: 'application/json' });
+        const jsonHref = URL.createObjectURL(jsonBlob);
+        await triggerDownload('Beoordelingsformulier beroepshouding import.json', jsonHref);
+
+        // 3. Instructies TXT
+        const instructies = 'Plaats de afbeelding in je stagedocument. Importeer de JSON file zodra je de eindbeoordeling gaat doen.';
+        const txtBlob = new Blob([instructies], { type: 'text/plain' });
+        const txtHref = URL.createObjectURL(txtBlob);
+        await triggerDownload('instructies.txt', txtHref);
+
+        showToast('3 bestanden gedownload!');
+      } else {
+        showToast('PDF gedownload!');
+      }
+
+    } catch(e) {
+      showToast('Fout bij exporteren. Probeer opnieuw.', true);
+      console.error(e);
+    }
+
+    // Restore placeholders
+    ['begeleider','student'].forEach(k => {
+      if (!hasDrawn['sig-'+k]) {
+        const ph = document.getElementById('ph-'+k);
+        if (ph) ph.style.display = 'flex';
+      }
+    });
+  }
+</script>
+</body>
+</html>
